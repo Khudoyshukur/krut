@@ -1,10 +1,8 @@
-import com.sun.net.httpserver.HttpServer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import engine.EngineType
+import engine.HttpServerEngine
+import engine.TomcatEngine
 import network.KrutHttpHandler
-import java.net.InetSocketAddress
-import java.util.concurrent.Executors
+import network.KrutServletHandler
 
 class KrutApp(
     private val globalMiddleWares: List<KrutMiddleWare> = listOf()
@@ -92,19 +90,28 @@ class KrutApp(
         )
     }
 
-    fun listen(port: Int = 8080, host: String = "0.0.0.0") {
-        val server = HttpServer.create(InetSocketAddress(host, port), 0)
-        val dispatcher = Executors.newCachedThreadPool()
-        val scope = CoroutineScope(Dispatchers.IO)
-        val handler = KrutHttpHandler(getRoutes = { routes })
+    fun listen(
+        port: Int = 8080,
+        host: String = "0.0.0.0",
+        engineType: EngineType = EngineType.TOMCAT
+    ) {
+        val engine = when (engineType) {
+            EngineType.HTTP_SERVER -> HttpServerEngine(
+                port = port,
+                host = host,
+                handler = KrutHttpHandler(getRoutes = { routes })
+            )
 
-        server.createContext("/") { exchange ->
-            scope.launch { handler.handle(exchange) }
+            EngineType.TOMCAT -> TomcatEngine(
+                port = 8080,
+                host = host,
+                krutHandler = KrutServletHandler(
+                    getRoutes = { routes }
+                )
+            )
         }
 
-        server.executor = dispatcher
-        server.start()
-
         println("Krut running at http://${if (host == "0.0.0.0") "localhost" else host}:$port")
+        engine.start()
     }
 }

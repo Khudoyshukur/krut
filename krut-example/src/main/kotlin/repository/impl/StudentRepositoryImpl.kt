@@ -24,7 +24,11 @@ class StudentRepositoryImpl : StudentRepository {
             val reader = FileReader(studentsFile)
             val storedStudents = Json.decodeFromString<List<Student>>(reader.readText())
             students.addAll(storedStudents)
-        } catch (e: Exception) { }
+        }
+        catch (e: Exception) { }
+        finally {
+            fakeId = students.maxByOrNull { it.id }?.id?.plus(1) ?: 1L
+        }
     }
 
     override suspend fun getAllStudents(): List<Student> {

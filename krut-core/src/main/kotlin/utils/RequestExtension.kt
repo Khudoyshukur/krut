@@ -3,6 +3,21 @@ package utils
 import KrutMethod
 import KrutRequest
 import com.sun.net.httpserver.HttpExchange
+import jakarta.servlet.http.HttpServletRequest
+
+internal fun HttpServletRequest.toKrutRequest(pathParams: Map<String, String>): KrutRequest {
+    val headers = headerNames.toList().associateWith { getHeader(it) }
+    val queryParams = parameterMap.mapValues { it.value.firstOrNull() ?: "" }
+
+    return KrutRequest(
+        method = KrutMethod.valueOfOrNull(method) ?: KrutMethod.GET,
+        path = requestURI,
+        queryParams = queryParams,
+        headers = headers,
+        bodyStream = inputStream,
+        pathParams = pathParams
+    )
+}
 
 internal fun HttpExchange.toKrutRequest(pathParams: Map<String, String>): KrutRequest {
     return KrutRequest(
