@@ -4,7 +4,7 @@ data class KrutRoute(
     val path: String,
     val pathRegex: Regex,
     val paramNames: List<String>,
-    val handler: suspend KrutRequest.() -> KrutResponse,
+    val handler: KrutHandler,
 )
 
 internal fun compilePath(template: String): Pair<Regex, List<String>> {

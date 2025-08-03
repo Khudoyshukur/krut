@@ -8,15 +8,22 @@ import repository.StudentRepository
 val repo: StudentRepository = StudentRepositoryImpl()
 
 fun main() {
-    val app = KrutApp()
+    val logHandler: KrutMiddleWare =  { req, next ->
+        val resp = next(req)
+        println("Executed ${req.method} ${req.path}, responded with ${resp.status}")
+
+        resp
+    }
+
+    val app = KrutApp(globalMiddleWares = listOf(logHandler))
 
     app.get("/students") {
         val students = repo.getAllStudents()
         respondJson(data = StudentsList(students))
     }
 
-    app.put("/students") {
-        val student = this.body<Student>()
+    app.put("/students") { req ->
+        val student = req.body<Student>()
 
         if (repo.updateStudent(student)) {
             respondJson200(data = MessageResponse(message = "Updated successfully"))
@@ -25,8 +32,8 @@ fun main() {
         }
     }
 
-    app.delete("/students/:id") {
-        val studentId = pathParams["id"]!!.toLong()
+    app.delete("/students/:id") { req ->
+        val studentId = req.pathParams["id"]!!.toLong()
 
         if (repo.deleteStudent(studentId)) {
             respondJson200(data = MessageResponse(message = "Deleted successfully"))
@@ -35,8 +42,8 @@ fun main() {
         }
     }
 
-    app.post("/students") {
-        val input = body<StudentInput>()
+    app.post("/students") { req ->
+        val input = req.body<StudentInput>()
         val student = repo.insertStudent(input)
 
         respondJson200(data = student)

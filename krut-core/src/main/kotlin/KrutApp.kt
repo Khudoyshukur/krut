@@ -3,49 +3,69 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.KrutHttpHandler
-import utils.routeNotFoundResponse
-import utils.toKrutRequest
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
-class KrutApp {
+class KrutApp(
+    private val globalMiddleWares: List<KrutMiddleWare> = listOf()
+) {
     private val routes = mutableListOf<KrutRoute>()
 
-    fun get(path: String, handler: suspend KrutRequest.() -> KrutResponse) {
+    fun get(
+        path: String,
+        middleWares: List<KrutMiddleWare> = listOf(),
+        handler: KrutHandler,
+    ) {
         val route = buildRoute(
             method = KrutMethod.GET,
             path = path,
-            handler = handler
+            handler = handler,
+            middleWares = middleWares
         )
 
         routes.add(route)
     }
 
-    fun post(path: String, handler: suspend KrutRequest.() -> KrutResponse) {
+    fun post(
+        path: String,
+        middleWares: List<KrutMiddleWare> = listOf(),
+        handler: KrutHandler,
+    ) {
         val route = buildRoute(
             method = KrutMethod.POST,
             path = path,
-            handler = handler
+            handler = handler,
+            middleWares = middleWares
         )
 
         routes.add(route)
     }
 
-    fun put(path: String, handler: suspend KrutRequest.() -> KrutResponse) {
+    fun put(
+        path: String,
+        middleWares: List<KrutMiddleWare> = listOf(),
+        handler: KrutHandler,
+    ) {
         val route = buildRoute(
             method = KrutMethod.PUT,
             path = path,
-            handler = handler
+            handler = handler,
+            middleWares = middleWares
         )
 
         routes.add(route)
     }
 
-    fun delete(path: String, handler: suspend KrutRequest.() -> KrutResponse) {
+    fun delete(
+        path: String,
+        middleWares: List<KrutMiddleWare> = listOf(),
+        handler: KrutHandler,
+    ) {
         val route = buildRoute(
             method = KrutMethod.DELETE,
             path = path,
-            handler = handler
+            handler = handler,
+            middleWares = middleWares
         )
 
         routes.add(route)
@@ -54,16 +74,21 @@ class KrutApp {
     private fun buildRoute(
         method: KrutMethod,
         path: String,
-        handler: suspend KrutRequest.() -> KrutResponse
+        handler: KrutHandler,
+        middleWares: List<KrutMiddleWare>
     ): KrutRoute {
         val (pathRegex, paramNames) = compilePath(path)
+        val fullHandler = chainMiddleWares(
+            handler = handler,
+            middleWares = globalMiddleWares + middleWares
+        )
 
         return KrutRoute(
             method = method,
             path = path,
             pathRegex = pathRegex,
             paramNames = paramNames,
-            handler = handler
+            handler = fullHandler
         )
     }
 
