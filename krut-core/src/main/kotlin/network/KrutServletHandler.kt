@@ -1,16 +1,16 @@
 package network
 
+import KrutMethod
 import KrutRoute
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.runBlocking
 import utils.routeNotFoundResponse
 import utils.toKrutRequest
 
 class KrutServletHandler(
     private val getRoutes: () -> List<KrutRoute>
 ) {
-    fun handle(req: HttpServletRequest, resp: HttpServletResponse) = runBlocking {
+    suspend fun handle(req: HttpServletRequest, resp: HttpServletResponse) {
         val routes = getRoutes()
 
         try {

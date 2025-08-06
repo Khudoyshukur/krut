@@ -3,9 +3,15 @@ package engine
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import network.KrutServletHandler
 import org.apache.catalina.connector.Connector
 import org.apache.catalina.startup.Tomcat
+import java.util.concurrent.Executors
 
 class TomcatEngine(
     private val port: Int = 8080,
@@ -13,7 +19,8 @@ class TomcatEngine(
     private val contextPath: String = "",
     private val krutHandler: KrutServletHandler
 ): KrutEngine {
-
+    private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
+    private val scope = CoroutineScope(dispatcher + SupervisorJob())
     private val tomcat = Tomcat()
 
     override fun start() {
@@ -22,9 +29,13 @@ class TomcatEngine(
 
         Tomcat.addServlet(ctx, "krutServlet", object : HttpServlet() {
             override fun service(req: HttpServletRequest, resp: HttpServletResponse) {
-                krutHandler.handle(req, resp)
+                val async = req.startAsync()
+                scope.launch {
+                    krutHandler.handle(req, resp)
+                    async.complete()
+                }
             }
-        })
+        }).apply { isAsyncSupported = true }
         ctx.addServletMappingDecoded("/*", "krutServlet")
 
         val connector = Connector()
@@ -39,5 +50,7 @@ class TomcatEngine(
 
     override fun stop() {
         tomcat.stop()
+        scope.cancel()
+        dispatcher.close()
     }
 }
