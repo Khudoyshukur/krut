@@ -1,10 +1,9 @@
 import engine.EngineType
 import model.MessageResponse
 import model.Student
-import model.StudentsList
 import model.input.StudentInput
-import repository.impl.StudentRepositoryImpl
 import repository.StudentRepository
+import repository.impl.StudentRepositoryImpl
 import utils.krut
 
 val repo: StudentRepository = StudentRepositoryImpl()
@@ -13,7 +12,7 @@ fun main() {
     val app = krut {
         get("/students") {
             val students = repo.getAllStudents()
-            respondJson200(data = StudentsList(students))
+            respondJson200(data = students)
         }
 
         put("/students") { req ->
