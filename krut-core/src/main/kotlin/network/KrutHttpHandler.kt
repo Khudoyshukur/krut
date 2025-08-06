@@ -1,16 +1,15 @@
 package network
 
+import KrutMethod
 import KrutRoute
 import com.sun.net.httpserver.HttpExchange
-import com.sun.net.httpserver.HttpHandler
-import kotlinx.coroutines.runBlocking
 import utils.routeNotFoundResponse
 import utils.toKrutRequest
 
 class KrutHttpHandler(
     private val getRoutes: () -> List<KrutRoute>
-): HttpHandler {
-    override fun handle(exchange: HttpExchange) = runBlocking {
+) {
+    suspend fun handle(exchange: HttpExchange) {
         val routes = getRoutes()
 
         try {
