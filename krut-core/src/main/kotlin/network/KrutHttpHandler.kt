@@ -29,10 +29,10 @@ class KrutHttpHandler(
                 matchedRoute.handler.invoke(request)
             }
 
-            exchange.sendResponseHeaders(response.status, response.body.size.toLong())
             response.headers.forEach { (key, value) ->
                 exchange.responseHeaders.add(key, value)
             }
+            exchange.sendResponseHeaders(response.status, response.body.size.toLong())
             exchange.responseBody.use { it.write(response.body) }
 
         } catch (e: Exception) {

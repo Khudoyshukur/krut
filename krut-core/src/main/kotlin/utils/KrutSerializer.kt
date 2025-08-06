@@ -4,7 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
 object KrutSerializer  {
-    val json = Json { prettyPrint = true }
+    val json = Json {}
 
     inline fun <reified T: Any> serialize(data: T): String {
         return json.encodeToString(serializer =  serializer(), value = data)
