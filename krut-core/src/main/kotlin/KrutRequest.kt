@@ -1,4 +1,5 @@
 import com.sun.net.httpserver.HttpExchange
+import jakarta.servlet.http.HttpServletRequest
 import serialization.KrutJsonSerializer
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -6,16 +7,34 @@ import java.nio.charset.Charset
 data class KrutRequest(
     val method: KrutMethod,
     val path: String,
-    val headers: Map<String, String>,
+    private val headers: Map<String, String>,
     val queryParams: Map<String, String>,
     val pathParams: Map<String, String>,
     val body: InputStream
-)
+) {
+    fun getHeader(header: String): String? {
+        return headers[header] ?: headers[header.lowercase()]
+    }
+}
 
 inline fun <reified T: Any> KrutRequest.body(): T {
     val json = this.body.readAllBytes().toString(Charset.defaultCharset())
 
     return KrutJsonSerializer.deserialize(json)
+}
+
+internal fun HttpServletRequest.toKrutRequest(pathParams: Map<String, String>): KrutRequest {
+    val headers = headerNames.toList().associateWith { getHeader(it) }
+    val queryParams = parameterMap.mapValues { it.value.firstOrNull() ?: "" }
+
+    return KrutRequest(
+        method = KrutMethod.valueOf(method),
+        path = requestURI,
+        queryParams = queryParams,
+        headers = headers,
+        body = inputStream,
+        pathParams = pathParams
+    )
 }
 
 fun HttpExchange.toRequest(

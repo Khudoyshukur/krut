@@ -1,3 +1,4 @@
+import engine.EngineType
 import model.Student
 import model.StudentInput
 import model.MessageResponse
@@ -31,7 +32,7 @@ fun main() {
         resp
     }
     val securityMiddleware: KrutMiddleware = { req, next ->
-        val authToken = req.headers["Authorization"]
+        val authToken = req.getHeader("Authorization")
         if (authToken != APP_TOKEN) {
             respondJson(
                 status = 401,
@@ -97,6 +98,7 @@ fun main() {
 
     krutApp.listen(
         port = 8080,
-        host = "0.0.0.0"
+        host = "0.0.0.0",
+        engineType = EngineType.TOMCAT
     )
 }

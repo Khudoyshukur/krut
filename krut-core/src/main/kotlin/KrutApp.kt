@@ -1,4 +1,7 @@
 import com.sun.net.httpserver.HttpServer
+import engine.EngineType
+import engine.HttpServerEngine
+import engine.TomcatEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -71,17 +74,16 @@ class KrutApp(
 
     fun listen(
         port: Int,
-        host: String
+        host: String,
+        engineType: EngineType = EngineType.TOMCAT
     ) {
-        val server = HttpServer.create(InetSocketAddress(host, port), 0)
-        val handler = HttpExchangeHandler(getRoutes = { routes })
-        val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-        server.createContext("/") {
-            coroutineScope.launch { handler.handle(it) }
+        val engine = when(engineType) {
+            EngineType.HTTP_SERVER -> HttpServerEngine(host = host, port = port, routes = { routes })
+            EngineType.TOMCAT -> TomcatEngine(port = port, host = host, routes = { routes })
         }
 
-        println("Krut app started at http://localhost:${port}/")
-        server.start()
+        println("Engine started at http://localhost:$port using engine=${engineType}")
+
+        engine.start()
     }
 }
