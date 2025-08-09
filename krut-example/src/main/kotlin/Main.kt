@@ -15,9 +15,35 @@ import util.respondJson
 // remove student
 // update student
 
+// middleware
+// req ->  operations  -> res
+// req -> token checking <-  => logging => res
+// global, local
+
+private const val APP_TOKEN = "qwerty111222333"
+
 fun main() {
     val repo: StudentRepository = FileStudentRepository()
-    val krutApp = KrutApp()
+    val logMiddleWare: KrutMiddleware = { req, next ->
+        val resp = next(req)
+        println("Request: ${req.method} ${req.path} and response status ${resp.status}")
+
+        resp
+    }
+    val securityMiddleware: KrutMiddleware = { req, next ->
+        val authToken = req.headers["Authorization"]
+        if (authToken != APP_TOKEN) {
+            respondJson(
+                status = 401,
+                body = MessageResponse("Not authorized")
+            )
+        } else {
+            next(req)
+        }
+    }
+    val krutApp = KrutApp(
+        globalMiddlewares = listOf(logMiddleWare)
+    )
 
     krutApp.get("/students") {
         respondJson(
@@ -26,7 +52,7 @@ fun main() {
         )
     }
 
-    krutApp.post("/students") {
+    krutApp.post("/students", middlewares = listOf(securityMiddleware)) {
         val input = it.body<StudentInput>()
         repo.addStudent(input)
 
@@ -36,7 +62,7 @@ fun main() {
         )
     }
 
-    krutApp.put("/students") {
+    krutApp.put("/students", middlewares = listOf(securityMiddleware)) {
         val updatedStudent = it.body<Student>()
         if (repo.getStudentById(updatedStudent.id) == null) {
             respondJson(
@@ -52,7 +78,7 @@ fun main() {
         }
     }
 
-    krutApp.delete("/students/:studentId") {
+    krutApp.delete("/students/:studentId", middlewares = listOf(securityMiddleware)) {
         val studentId = it.pathParams["studentId"]!!.toLong()
         if (repo.getStudentById(studentId) == null) {
             respondJson(

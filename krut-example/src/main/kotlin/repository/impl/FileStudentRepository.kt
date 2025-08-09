@@ -26,6 +26,7 @@ class FileStudentRepository: StudentRepository {
             val students = Json.decodeFromString<List<Student>>(json)
 
             this.students.addAll(students)
+            idIncrement = students.map { it.id }.max() + 1L
         } catch (e: Exception) {
             // ignore
         }
