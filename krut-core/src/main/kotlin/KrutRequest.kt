@@ -1,5 +1,7 @@
 import com.sun.net.httpserver.HttpExchange
+import serialization.KrutJsonSerializer
 import java.io.InputStream
+import java.nio.charset.Charset
 
 data class KrutRequest(
     val method: KrutMethod,
@@ -9,6 +11,12 @@ data class KrutRequest(
     val pathParams: Map<String, String>,
     val body: InputStream
 )
+
+inline fun <reified T: Any> KrutRequest.body(): T {
+    val json = this.body.readAllBytes().toString(Charset.defaultCharset())
+
+    return KrutJsonSerializer.deserialize(json)
+}
 
 fun HttpExchange.toRequest(
     pathParams: Map<String, String>

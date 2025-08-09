@@ -1,32 +1,72 @@
 import model.Student
+import model.StudentInput
+import model.MessageResponse
+import repository.StudentRepository
+import repository.impl.FileStudentRepository
+import repository.impl.InMemoryStudentRepository
 import util.respondJson
 
+// http request body (json body)
+
+// student management app
+
+// get all students
+// add student
+// remove student
+// update student
+
 fun main() {
+    val repo: StudentRepository = FileStudentRepository()
     val krutApp = KrutApp()
 
-    krutApp.get("/students/") {
-        val list = listOf(
-            Student(
-                id = 1,
-                name = "Khudoyshukur",
-                age = 25
-            )
-        )
-
+    krutApp.get("/students") {
         respondJson(
             status = 200,
-            body = list
+            body = repo.getAll()
         )
     }
 
-    krutApp.get("/students/:studentId/room/:roomId") {
-        println("Student id is -> ${it.pathParams["studentId"]}, Room id is -> ${it.pathParams["roomId"]}")
+    krutApp.post("/students") {
+        val input = it.body<StudentInput>()
+        repo.addStudent(input)
 
-        KrutResponse(
+        respondJson(
             status = 200,
-            headers = mapOf(),
-            body = "Hello from students abs GET".toByteArray()
+            body = MessageResponse("Student added successfully")
         )
+    }
+
+    krutApp.put("/students") {
+        val updatedStudent = it.body<Student>()
+        if (repo.getStudentById(updatedStudent.id) == null) {
+            respondJson(
+                status = 404,
+                body = MessageResponse("Student not found")
+            )
+        } else {
+            repo.updateStudent(updatedStudent)
+            respondJson(
+                status = 200,
+                body = MessageResponse("Student updated successfully")
+            )
+        }
+    }
+
+    krutApp.delete("/students/:studentId") {
+        val studentId = it.pathParams["studentId"]!!.toLong()
+        if (repo.getStudentById(studentId) == null) {
+            respondJson(
+                status = 404,
+                body = MessageResponse("Student not found")
+            )
+        } else {
+            repo.removeStudent(studentId)
+
+            respondJson(
+                status = 200,
+                body = MessageResponse("Student deleted successfully")
+            )
+        }
     }
 
     krutApp.listen(
@@ -34,18 +74,3 @@ fun main() {
         host = "0.0.0.0"
     )
 }
-
-// query param
-// pathParams
-// serialization types
-//
-
-// GET, POST, PUT, DELETE
-// student management
-
-// {baseUrl}/students GET
-// {baseUrl}/students POST
-// {baseUrl}/students/{studentId} PUT
-// {baseUrl}/students/{studentId} DELETE
-
-//{baseUrl}/students?age=18 GET

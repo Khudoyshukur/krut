@@ -14,7 +14,7 @@ class HttpExchangeHandler(
         try {
             val path = exchange.requestURI.path.removeSuffix("/")
             val matchedRoute = routes.find {
-                it.path == path || it.pathRegex.matches(path)
+                it.method.name == exchange.requestMethod && (it.path == path || it.pathRegex.matches(path))
             }
 
             val response = if (matchedRoute == null) {

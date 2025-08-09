@@ -60,6 +60,7 @@ class KrutApp {
             coroutineScope.launch { handler.handle(it) }
         }
 
+        println("Krut app started at http://localhost:${port}/")
         server.start()
     }
 }
