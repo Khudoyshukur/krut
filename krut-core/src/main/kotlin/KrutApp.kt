@@ -1,117 +1,89 @@
+import com.sun.net.httpserver.HttpServer
 import engine.EngineType
 import engine.HttpServerEngine
 import engine.TomcatEngine
-import network.KrutHttpHandler
-import network.KrutServletHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import network.HttpExchangeHandler
+import java.net.InetSocketAddress
 
 class KrutApp(
-    private val globalMiddleWares: List<KrutMiddleWare> = listOf()
+    private val globalMiddlewares: List<KrutMiddleware> = listOf()
 ) {
+
     private val routes = mutableListOf<KrutRoute>()
 
     fun get(
         path: String,
-        middleWares: List<KrutMiddleWare> = listOf(),
-        handler: KrutHandler,
+        middlewares: List<KrutMiddleware> = listOf(),
+        handler: KrutHandler
     ) {
-        val route = buildRoute(
-            method = KrutMethod.GET,
-            path = path,
-            handler = handler,
-            middleWares = middleWares
-        )
-
+        val route = buildRoute(method = KrutMethod.GET, path, middlewares, handler)
         routes.add(route)
     }
 
     fun post(
         path: String,
-        middleWares: List<KrutMiddleWare> = listOf(),
-        handler: KrutHandler,
+        middlewares: List<KrutMiddleware> = listOf(),
+        handler: KrutHandler
     ) {
-        val route = buildRoute(
-            method = KrutMethod.POST,
-            path = path,
-            handler = handler,
-            middleWares = middleWares
-        )
-
+        val route = buildRoute(method = KrutMethod.POST, path, middlewares, handler)
         routes.add(route)
     }
 
     fun put(
         path: String,
-        middleWares: List<KrutMiddleWare> = listOf(),
-        handler: KrutHandler,
+        middlewares: List<KrutMiddleware> = listOf(),
+        handler: KrutHandler
     ) {
-        val route = buildRoute(
-            method = KrutMethod.PUT,
-            path = path,
-            handler = handler,
-            middleWares = middleWares
-        )
-
+        val route = buildRoute(method = KrutMethod.PUT, path, middlewares, handler)
         routes.add(route)
     }
 
     fun delete(
         path: String,
-        middleWares: List<KrutMiddleWare> = listOf(),
-        handler: KrutHandler,
+        middlewares: List<KrutMiddleware> = listOf(),
+        handler: KrutHandler
     ) {
-        val route = buildRoute(
-            method = KrutMethod.DELETE,
-            path = path,
-            handler = handler,
-            middleWares = middleWares
-        )
-
+        val route = buildRoute(method = KrutMethod.DELETE, path, middlewares, handler)
         routes.add(route)
     }
 
     private fun buildRoute(
         method: KrutMethod,
         path: String,
-        handler: KrutHandler,
-        middleWares: List<KrutMiddleWare>
+        middlewares: List<KrutMiddleware> = listOf(),
+        handler: KrutHandler
     ): KrutRoute {
-        val (pathRegex, paramNames) = compilePath(path)
-        val fullHandler = chainMiddleWares(
-            handler = handler,
-            middleWares = globalMiddleWares + middleWares
-        )
+        val formattedPath = path.removeSuffix("/")
+        val (regex, pathNames) = getRegexAndPathNames(formattedPath)
+
+        val newHandler = chainMiddlewares(handler, globalMiddlewares + middlewares)
 
         return KrutRoute(
             method = method,
-            path = path,
-            pathRegex = pathRegex,
-            paramNames = paramNames,
-            handler = fullHandler
+            path = formattedPath,
+            handler = newHandler,
+            pathRegex = regex,
+            pathNames = pathNames
         )
     }
 
+
     fun listen(
-        port: Int = 8080,
-        host: String = "0.0.0.0",
+        port: Int,
+        host: String,
         engineType: EngineType = EngineType.TOMCAT
     ) {
-        val engine = when (engineType) {
-            EngineType.HTTP_SERVER -> HttpServerEngine(
-                port = port,
-                host = host,
-                handler = KrutHttpHandler(getRoutes = { routes })
-            )
-
-            EngineType.TOMCAT -> TomcatEngine(
-                port = 8080,
-                host = host,
-                krutHandler = KrutServletHandler(
-                    getRoutes = { routes }
-                )
-            )
+        val engine = when(engineType) {
+            EngineType.HTTP_SERVER -> HttpServerEngine(host = host, port = port, routes = { routes })
+            EngineType.TOMCAT -> TomcatEngine(port = port, host = host, routes = { routes })
         }
 
-        println("Krut running at http://${if (host == "0.0.0.0") "localhost" else host}:$port")
+        println("Engine started at http://localhost:$port using engine=${engineType}")
+
         engine.start()
     }
 }

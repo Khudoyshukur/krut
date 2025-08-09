@@ -1,10 +1,18 @@
-typealias KrutMiddleWare = suspend (req: KrutRequest, next: KrutHandler) -> KrutResponse
 
-fun chainMiddleWares(
+typealias KrutMiddleware = suspend (KrutRequest, KrutHandler) -> KrutResponse
+
+fun chainMiddlewares(
     handler: KrutHandler,
-    middleWares: List<KrutMiddleWare>
+    middlewares: List<KrutMiddleware>
 ): KrutHandler {
-    return middleWares.reversed().fold(handler) { next, middleware ->
-        { req -> middleware(req, next) }
+    // MW2--MW1--[Handler]--MW1--MW2
+
+    var currentHandler = handler
+
+    for (middleware in middlewares.reversed()) {
+        val next = currentHandler
+        currentHandler = { krutRequest -> middleware(krutRequest, next) }
     }
+
+    return currentHandler
 }

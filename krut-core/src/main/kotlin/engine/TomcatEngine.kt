@@ -1,13 +1,10 @@
 package engine
 
+import KrutRoute
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import network.KrutServletHandler
 import org.apache.catalina.connector.Connector
 import org.apache.catalina.startup.Tomcat
@@ -17,13 +14,14 @@ class TomcatEngine(
     private val port: Int = 8080,
     private val host: String,
     private val contextPath: String = "",
-    private val krutHandler: KrutServletHandler
+    private val routes: () -> List<KrutRoute>
 ): KrutEngine {
     private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
     private val tomcat = Tomcat()
 
     override fun start() {
+        val krutHandler: KrutServletHandler = KrutServletHandler(getRoutes = { routes() })
         tomcat.setPort(port)
         val ctx = tomcat.addContext(contextPath, System.getProperty("java.io.tmpdir"))
 

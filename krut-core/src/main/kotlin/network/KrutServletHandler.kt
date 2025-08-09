@@ -1,11 +1,11 @@
 package network
 
 import KrutMethod
+import KrutResponse
 import KrutRoute
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import utils.routeNotFoundResponse
-import utils.toKrutRequest
+import toKrutRequest
 
 class KrutServletHandler(
     private val getRoutes: () -> List<KrutRoute>
@@ -18,16 +18,19 @@ class KrutServletHandler(
             val requestMethod = req.method
 
             val matchedRoute = routes.find {
-                it.method == KrutMethod.valueOfOrNull(requestMethod) &&
-                        it.pathRegex.matches(requestPath)
+                it.method == KrutMethod.valueOf(requestMethod) && it.pathRegex.matches(requestPath)
             }
 
             val response = if (matchedRoute == null) {
-                routeNotFoundResponse(requestPath)
+                KrutResponse(
+                    status = 404,
+                    headers = mapOf(),
+                    body = "Route not found".toByteArray()
+                )
             } else {
                 val match = matchedRoute.pathRegex.matchEntire(requestPath)!!
                 val paramValues = match.groupValues.drop(1)
-                val pathParams = matchedRoute.paramNames.zip(paramValues).toMap()
+                val pathParams = matchedRoute.pathNames.zip(paramValues).toMap()
                 val request = req.toKrutRequest(pathParams)
                 matchedRoute.handler.invoke(request)
             }

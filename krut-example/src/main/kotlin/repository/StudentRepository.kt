@@ -1,11 +1,12 @@
 package repository
 
 import model.Student
-import model.input.StudentInput
+import model.StudentInput
 
 interface StudentRepository {
-    suspend fun getAllStudents(): List<Student>
-    suspend fun insertStudent(input: StudentInput): Student
+    suspend fun getAll(): List<Student>
+    suspend fun getStudentById(id: Long): Student?
+    suspend fun removeStudent(id: Long): Boolean
+    suspend fun addStudent(input: StudentInput): Boolean
     suspend fun updateStudent(student: Student): Boolean
-    suspend fun deleteStudent(id: Long): Boolean
 }

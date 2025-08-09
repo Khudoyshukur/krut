@@ -3,17 +3,41 @@ data class KrutRoute(
     val method: KrutMethod,
     val path: String,
     val pathRegex: Regex,
-    val paramNames: List<String>,
+    val pathNames: List<String>,
     val handler: KrutHandler,
 )
 
-internal fun compilePath(template: String): Pair<Regex, List<String>> {
-    val paramNames = mutableListOf<String>()
-    val pattern = template.split("/").joinToString("/") {
-        if (it.startsWith(":")) {
-            paramNames += it.drop(1)
-            "([^/]+)"
-        } else it
+fun getRegexAndPathNames(path: String): Pair<Regex, List<String>> {
+    // students/:studentId/room/:roomId
+    // students/([^/]+)/room/([^/]+)
+    // [studentId, roomId]
+
+    val parts = path.split("/")
+    val names = mutableListOf<String>()
+    val regexBuilder = StringBuilder("")
+    regexBuilder.append("^")
+
+    // students/:studentId/room/:roomId
+    // students/:studentId/room/:roomId
+    // [students, :studentId, room, :roomId]
+
+    parts.forEachIndexed { index, part ->
+        if (part.startsWith(':')) {
+            names.add(part.removePrefix(":"))
+            regexBuilder.append("([^/]+)")
+        } else {
+            regexBuilder.append(part)
+        }
+
+        if (index != parts.lastIndex) {
+            regexBuilder.append("/")
+        }
     }
-    return Regex("^$pattern$") to paramNames
+
+    regexBuilder.append("$")
+
+    return Pair(
+        Regex(pattern = regexBuilder.toString()),
+        names
+    )
 }

@@ -1,1 +1,2 @@
-typealias KrutHandler = suspend (req: KrutRequest) -> KrutResponse
+
+typealias KrutHandler = suspend (KrutRequest) -> KrutResponse

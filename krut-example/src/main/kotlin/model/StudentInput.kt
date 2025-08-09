@@ -1,4 +1,4 @@
-package model.input
+package model
 
 import kotlinx.serialization.Serializable
 

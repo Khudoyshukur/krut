@@ -1,23 +1,24 @@
 package engine
 
+import KrutRoute
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.*
-import network.KrutHttpHandler
+import network.HttpExchangeHandler
 import java.net.InetSocketAddress
-import java.util.concurrent.Executors
 
 class HttpServerEngine(
-    port: Int = 8080,
-    host: String = "0.0.0.0",
-    private val handler: KrutHttpHandler
+    private val host: String,
+    private val port: Int,
+    private val routes: () -> List<KrutRoute>
 ): KrutEngine {
-    private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
-    private val scope = CoroutineScope(dispatcher + SupervisorJob())
     private val server = HttpServer.create(InetSocketAddress(host, port), 0)
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun start() {
-        server.createContext("/") { exchange ->
-            scope.launch { handler.handle(exchange) }
+        val handler = HttpExchangeHandler(getRoutes = { routes() })
+
+        server.createContext("/") {
+            coroutineScope.launch { handler.handle(it) }
         }
 
         server.start()
@@ -25,7 +26,6 @@ class HttpServerEngine(
 
     override fun stop() {
         server.stop(1)
-        scope.cancel()
-        dispatcher.close()
+        coroutineScope.cancel()
     }
 }
