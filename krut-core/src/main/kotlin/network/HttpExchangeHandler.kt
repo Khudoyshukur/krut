@@ -12,8 +12,10 @@ class HttpExchangeHandler(
         val routes = getRoutes()
 
         try {
-            val path = exchange.requestURI.path
-            val matchedRoute = routes.find { it.path == path }
+            val path = exchange.requestURI.path.removeSuffix("/")
+            val matchedRoute = routes.find {
+                it.path == path || it.pathRegex.matches(path)
+            }
 
             val response = if (matchedRoute == null) {
                 KrutResponse(
@@ -22,7 +24,10 @@ class HttpExchangeHandler(
                     body = "Route not found".toByteArray()
                 )
             } else {
-                val request = exchange.toRequest()
+                val pathValues = matchedRoute.pathRegex.matchEntire(path)?.groupValues?.drop(1).orEmpty()
+                val pathParams = matchedRoute.pathNames.zip(pathValues).toMap()
+
+                val request = exchange.toRequest(pathParams)
                 matchedRoute.handler.invoke(request)
             }
 
@@ -32,6 +37,7 @@ class HttpExchangeHandler(
             exchange.sendResponseHeaders(response.status, 0)
             exchange.responseBody.use { it.write(response.body) }
         } catch (throwable: Throwable) {
+            throwable.printStackTrace()
             exchange.sendResponseHeaders(500, 0)
             exchange.responseBody.use { it.write("Internal Server Error".toByteArray()) }
         }

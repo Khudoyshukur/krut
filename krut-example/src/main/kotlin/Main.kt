@@ -1,15 +1,27 @@
+import model.Student
+import util.respondJson
+
 fun main() {
     val krutApp = KrutApp()
 
-    krutApp.get("/students") {
-        KrutResponse(
+    krutApp.get("/students/") {
+        val list = listOf(
+            Student(
+                id = 1,
+                name = "Khudoyshukur",
+                age = 25
+            )
+        )
+
+        respondJson(
             status = 200,
-            headers = mapOf(),
-            body = "Hello from students GET".toByteArray()
+            body = list
         )
     }
 
-    krutApp.put("/students/:studentId") {
+    krutApp.get("/students/:studentId/room/:roomId") {
+        println("Student id is -> ${it.pathParams["studentId"]}, Room id is -> ${it.pathParams["roomId"]}")
+
         KrutResponse(
             status = 200,
             headers = mapOf(),
@@ -22,6 +34,11 @@ fun main() {
         host = "0.0.0.0"
     )
 }
+
+// query param
+// pathParams
+// serialization types
+//
 
 // GET, POST, PUT, DELETE
 // student management

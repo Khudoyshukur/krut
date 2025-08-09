@@ -10,13 +10,15 @@ data class KrutRequest(
     val body: InputStream
 )
 
-fun HttpExchange.toRequest(): KrutRequest {
+fun HttpExchange.toRequest(
+    pathParams: Map<String, String>
+): KrutRequest {
     return KrutRequest(
         method = KrutMethod.valueOf(this.requestMethod),
         path = this.requestURI.path,
         headers = this.getHeaders() ,
-        queryParams = mapOf(),
-        pathParams = mapOf(),
+        queryParams = getQueryParams(),
+        pathParams = pathParams,
         body = this.requestBody
     )
 }
@@ -30,4 +32,17 @@ fun HttpExchange.getHeaders(): MutableMap<String, String> {
     }
 
     return headers
+}
+
+fun HttpExchange.getQueryParams(): Map<String, String> {
+    val params = mutableMapOf<String, String>()
+    if (this.requestURI.query.isNullOrBlank()) return params
+
+    val queries = this.requestURI.query.split("&")
+    queries.forEach { query ->
+        val parts = query.split("=")
+        params[parts[0]] = parts[1]
+    }
+
+    return params
 }

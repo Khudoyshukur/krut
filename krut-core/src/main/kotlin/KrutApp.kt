@@ -11,39 +11,40 @@ class KrutApp {
     private val routes = mutableListOf<KrutRoute>()
 
     fun get(path: String, handler: KrutHandler) {
-        val route = KrutRoute(
-            method = KrutMethod.GET,
-            path = path,
-            handler = handler
-        )
+        val route = buildRoute(method = KrutMethod.GET, path, handler)
         routes.add(route)
     }
 
     fun post(path: String, handler: KrutHandler) {
-        val route = KrutRoute(
-            method = KrutMethod.POST,
-            path = path,
-            handler = handler
-        )
+        val route = buildRoute(method = KrutMethod.POST, path, handler)
         routes.add(route)
     }
 
     fun put(path: String, handler: KrutHandler) {
-        val route = KrutRoute(
-            method = KrutMethod.PUT,
-            path = path,
-            handler = handler
-        )
+        val route = buildRoute(method = KrutMethod.PUT, path, handler)
         routes.add(route)
     }
 
     fun delete(path: String, handler: KrutHandler) {
-        val route = KrutRoute(
-            method = KrutMethod.DELETE,
-            path = path,
-            handler = handler
-        )
+        val route = buildRoute(method = KrutMethod.DELETE, path, handler)
         routes.add(route)
+    }
+
+    private fun buildRoute(
+        method: KrutMethod,
+        path: String,
+        handler: KrutHandler
+    ): KrutRoute {
+        val formattedPath = path.removeSuffix("/")
+        val (regex, pathNames) = getRegexAndPathNames(formattedPath)
+
+        return KrutRoute(
+            method = method,
+            path = formattedPath,
+            handler = handler,
+            pathRegex = regex,
+            pathNames = pathNames
+        )
     }
 
 
