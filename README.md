@@ -18,7 +18,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.github.khudoyshukur:krut-core:1.0.0")
+    implementation("io.github.khudoyshukur:krut-core:1.0.1")
 }
 ```
 
