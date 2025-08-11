@@ -6,6 +6,7 @@ import KrutRoute
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import toKrutRequest
+import java.io.ByteArrayInputStream
 
 class KrutServletHandler(
     private val getRoutes: () -> List<KrutRoute>
@@ -25,7 +26,7 @@ class KrutServletHandler(
                 KrutResponse(
                     status = 404,
                     headers = mapOf(),
-                    body = "Route not found".toByteArray()
+                    body = ByteArrayInputStream("Route not found".toByteArray())
                 )
             } else {
                 val match = matchedRoute.pathRegex.matchEntire(requestPath)!!
@@ -39,7 +40,7 @@ class KrutServletHandler(
             response.headers.forEach { (key, value) ->
                 resp.setHeader(key, value)
             }
-            resp.outputStream.use { it.write(response.body) }
+            resp.outputStream.use { response.body.copyTo(it) }
 
         } catch (e: Exception) {
             e.printStackTrace()

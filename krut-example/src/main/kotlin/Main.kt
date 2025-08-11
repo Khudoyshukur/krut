@@ -4,8 +4,9 @@ import model.StudentInput
 import model.MessageResponse
 import repository.StudentRepository
 import repository.impl.FileStudentRepository
-import repository.impl.InMemoryStudentRepository
+import util.respondFile
 import util.respondJson
+import java.io.File
 
 // http request body (json body)
 
@@ -94,6 +95,13 @@ fun main() {
                 body = MessageResponse("Student deleted successfully")
             )
         }
+    }
+
+    krutApp.get("/testFile") {
+        respondFile(
+            status = 200,
+            file = File("krut-example/src/main/kotlin/img.webp")
+        )
     }
 
     krutApp.listen(

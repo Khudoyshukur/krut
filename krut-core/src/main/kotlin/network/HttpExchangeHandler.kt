@@ -4,6 +4,7 @@ import KrutResponse
 import KrutRoute
 import com.sun.net.httpserver.HttpExchange
 import toRequest
+import java.io.ByteArrayInputStream
 
 class HttpExchangeHandler(
     private val getRoutes: () -> List<KrutRoute>
@@ -21,7 +22,7 @@ class HttpExchangeHandler(
                 KrutResponse(
                     status = 404,
                     headers = mapOf(),
-                    body = "Route not found".toByteArray()
+                    body = ByteArrayInputStream("Route not found".toByteArray())
                 )
             } else {
                 val pathValues = matchedRoute.pathRegex.matchEntire(path)?.groupValues?.drop(1).orEmpty()
@@ -35,7 +36,11 @@ class HttpExchangeHandler(
                 exchange.responseHeaders.add(header, value)
             }
             exchange.sendResponseHeaders(response.status, 0)
-            exchange.responseBody.use { it.write(response.body) }
+            exchange.responseBody.use { outStream ->
+                response.body.use { stream ->
+                    stream.copyTo(outStream)
+                }
+            }
         } catch (throwable: Throwable) {
             throwable.printStackTrace()
             exchange.sendResponseHeaders(500, 0)
