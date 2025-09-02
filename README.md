@@ -1,3 +1,6 @@
+## Checkout my course on how I built this framework. [Youtube Playlist (In Uzbek)](https://youtube.com/playlist?list=PLDF9Z13OTnwrrNczWmR-fhXiLQkj2SMvg&si=PANPM3NA1k4S3UDZ)
+---
+
 # Krut - Lightweight Kotlin Web Framework
 
 Krut is a modern, lightweight web framework for Kotlin that provides a simple and intuitive API for building web applications. It supports both HTTP Server and Tomcat engines, offers middleware support, and includes built-in JSON serialization.
